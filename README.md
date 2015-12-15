@@ -1,0 +1,2 @@
+# rustdoku
+Sudoku in Rust
