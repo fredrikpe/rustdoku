@@ -1,0 +1,4 @@
+[package]
+name = "rustdokus"
+version = "0.1.0"
+authors = ["Fredrik Ingebrigtsen <fredrikpei@gmail.com>"]
