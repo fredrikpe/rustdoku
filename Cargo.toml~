@@ -1,0 +1,7 @@
+[package]
+name = "rustdoku"
+version = "0.1.0"
+authors = ["Fredrik Ingebrigtsen <fredrikpei@gmail.com>"]
+
+[dependencies]
+gtk = "0.0"
