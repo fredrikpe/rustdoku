@@ -1,4 +1,4 @@
 # rustdoku
-Sudoku in Rust
+Sudoku in Rust.
 
-Work in progress.
+Simple console application. TODO: GUI and solver.
