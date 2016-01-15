@@ -1,161 +1,196 @@
-extern crate piston;
-extern crate opengl_graphics;
-extern crate graphics;
-//#[cfg(feature = "include_sdl2")]
-//extern crate sdl2_window;
-//#[cfg(feature = "include_glfw")]
-//extern crate glfw_window;
-//#[cfg(feature = "include_glutin")]
-extern crate glutin_window;
 
-use opengl_graphics::{ GlGraphics, OpenGL };
-use graphics::{ Context, Graphics };
-use std::rc::Rc;
-use std::collections::HashMap;
-use std::cell::RefCell;
-use piston::window::{ AdvancedWindow, WindowSettings };
-use piston::input::*;
-use piston::event_loop::*;
-//#[cfg(feature = "include_sdl2")]
-//use sdl2_window::Sdl2Window as Window;
-//#[cfg(feature = "include_glfw")]
-//use glfw_window::GlfwWindow as Window;
-//#[cfg(feature = "include_glutin")]
-use glutin_window::GlutinWindow as Window;
 
-type AxisValues = HashMap<(i32, u8), f64>;
+use std::io::prelude::*;
+use std::io;
+use std::fs::File;
 
-fn main() {
-    let opengl = OpenGL::V3_2;
-    let window: Window = WindowSettings::new("piston-example-user_input", [600, 600])
-        .exit_on_esc(false).opengl(opengl).build().unwrap();
-
-    println!("Press C to turn capture cursor on/off");
-
-    let mut capture_cursor = false;
-    let window = Rc::new(RefCell::new(window));
-    let ref mut gl = GlGraphics::new(opengl);
-    let mut cursor = [0.0, 0.0];
-
-    let mut axis_values: AxisValues = HashMap::new();
-
-    for e in window.clone().events() {
-        if let Some(Button::Mouse(button)) = e.press_args() {
-            println!("Pressed mouse button '{:?}'", button);
+struct Board {
+    cells: [i32; 81],
+    holes: i32,
+}
+impl Board {
+    fn new(board: Vec<i32>) -> Board {
+        let mut b:[i32; 81] = [0; 81];
+        let mut holes = 0;
+        let mut c = 0;
+        for i in board.iter() {
+            b[c] = *i;
+            if *i==0 { holes += 1; }
+            c += 1;
         }
-        if let Some(Button::Keyboard(key)) = e.press_args() {
-            if key == Key::C {
-                println!("Turned capture cursor on");
-                capture_cursor = !capture_cursor;
-                window.borrow_mut().set_capture_cursor(capture_cursor);
+        Board {
+            cells: b,
+            holes: holes,
+        } // todo: assert len==81
+    }
+
+    fn is_solved(&self) -> bool {
+        self.holes == 0
+    }
+
+    fn remove(&mut self, pos: usize) {
+        if self.cells[pos] != 0 {
+            self.cells[pos] = 0;
+            self.holes += 1;
+        }
+    }
+
+    fn insert(&mut self, pos: usize, value: i32) -> bool {
+        if value != 0 && self.legal(pos, value) {
+           self.cells[pos] = value;
+           self.holes -= 1;
+           true
+        } else { false }
+    }
+
+    fn legal(&self, pos: usize, value: i32) -> bool {
+        for i in (0..9).map(|i| i*(pos/9)) { // row
+            if i != pos && self.cells[i] == value {
+                return false
             }
-
-            println!("Pressed keyboard key '{:?}'", key);
-        };
-        if let Some(button) = e.release_args() {
-            match button {
-                Button::Keyboard(key) => println!("Released keyboard key '{:?}'", key),
-                Button::Mouse(button) => println!("Released mouse button '{:?}'", button),
-                Button::Joystick(button) => println!("Released joystick button '{:?}'", button),
+        }
+        for i in (0..9).map(|i| i*9 + pos%9) { // column
+            if i != pos && self.cells[i] == value {
+                return false
             }
-        };
-        if let Some(args) = e.joystick_axis_args() {
-            axis_values.insert((args.id, args.axis), args.position);
         }
-        e.mouse_cursor(|x, y| {
-            cursor = [x, y];
-            println!("Mouse moved '{} {}'", x, y);
-        });
-        e.mouse_scroll(|dx, dy| println!("Scrolled mouse '{}, {}'", dx, dy));
-        e.mouse_relative(|dx, dy| println!("Relative mouse moved '{} {}'", dx, dy));
-        e.text(|text| println!("Typed '{}'", text));
-        e.resize(|w, h| println!("Resized '{}, {}'", w, h));
-        if let Some(focused) = e.focus_args() {
-            if focused { println!("Gained focus"); }
-            else { println!("Lost focus"); }
-        };
-        if let Some(cursor) = e.cursor_args() {
-            if cursor { println!("Mouse entered"); }
-            else { println!("Mouse leaved"); }
-        };
-        if let Some(args) = e.render_args() {
-            gl.draw(args.viewport(), |c, g| {
-                    graphics::clear([1.0; 4], g);
-                    draw_rectangles(cursor, &window.borrow(), &c, g);
-                    //draw_axis_values(&mut axis_values, &window.borrow(), &c, g);
-                }
-            );
+        for i in self.get_box(pos) { // box
+            if i != pos && self.cells[i] == value {
+                return false
+            }
         }
-        e.update(|_| {});
+        true
+    }
+
+    fn get_box(&self, pos: usize) -> Vec<usize> {
+        let x = match pos % 9 {
+            0|1|2 => 0,
+            3|4|5 => 1,
+            _ => 2,
+        };
+        let y = match pos / 9 {
+            0|1|2 => 0,
+            3|4|5 => 1,
+            _ => 2,
+        };
+        let mut v = (0..3).map(|n| n+(3*x)+9*(3*y)).collect::<Vec<usize>>();
+        v.extend((0..3).map(|n| n+(3*x)+9*(3*y+1)));
+        v.extend((0..3).map(|n| n+(3*x)+9*(3*y+2)));
+        v
+    }
+
+    fn print_board(&self) {
+        let mut r = 1;
+        for c in self.cells.iter() {
+            if *c != 0 {
+                if r%3==1 { print!("{}", c); }
+                else { print!(" {}", c); }
+            } else {
+                if r%3==1 { print!(" "); }
+                else { print!("  "); }
+            }
+            if r%9==0 { println!(""); }
+            if r%3==0 && r%9 != 0 { print!("|"); }
+            if (r/9)%3==0 && (r/9)%9!=0 && r%9==0 {
+                print!("-----------------\n");
+            }
+            r += 1;
+        }
+        println!("");
     }
 }
 
-fn draw_rectangles<G: Graphics>(
-    cursor: [f64; 2],
-    window: &Window,
-    c: &Context,
-    g: &mut G,
-) {
-    use piston::window::Window;
-
-    let size = window.size();
-    let draw_size = window.draw_size();
-    let zoom = 0.2;
-    let offset = 30.0;
-
-    let rect_border = graphics::Rectangle::new_border([1.0, 0.0, 0.0, 1.0], 1.0);
-
-    // Cursor.
-    let cursor_color = [0.0, 0.0, 0.0, 1.0];
-    let zoomed_cursor = [offset + cursor[0] * zoom, offset + cursor[1] * zoom];
-    graphics::ellipse(
-        cursor_color,
-        graphics::ellipse::circle(zoomed_cursor[0], zoomed_cursor[1], 4.0),
-        c.transform,
-        g
-    );
-
-    // User coordinates.
-    rect_border.draw([
-            offset,
-            offset,
-            size.width as f64 * zoom,
-            size.height as f64 * zoom
-        ],
-        &c.draw_state, c.transform, g);
-    let rect_border = graphics::Rectangle::new_border([0.0, 0.0, 1.0, 1.0], 1.0);
-    rect_border.draw(
-        [
-            offset + size.width as f64 * zoom,
-            offset,
-            draw_size.width as f64 * zoom,
-            draw_size.height as f64 * zoom
-        ],
-        &c.draw_state, c.transform, g);
+struct Cell {
+    value: i32, // 0 = blank, 1-9
+}
+impl Cell {
+    fn new(value: i32) -> Cell { Cell { value: value }}
+    fn get_value(&self) -> i32 { self.value }
 }
 
-//fn draw_axis_values<G: Graphics>(
-//    axis_values: &mut AxisValues,
-//    window: &Window,
-//    c: &Context,
-//    g: &mut G
-//) {
-//    use piston::window::Window;
-//
-//    let window_height = window.size().height as f64;
-//    let max_axis_height = 200.0;
-//    let offset = 10.0;
-//    let top = window_height - (max_axis_height + offset);
-//    let color = [1.0, 0.0, 0.0, 1.0];
-//    let width = 10.0;
-//    let mut draw = |i, v: f64| {
-//        let i = i as f64;
-//        let height = (v + 1.0) / 2.0 * max_axis_height;
-//        let rect = [offset + i * (width + offset),
-//            top + max_axis_height - height, width, height];
-//        graphics::rectangle(color, rect, c.transform, g);
-//    };
-//    for (i, &v) in axis_values.values().enumerate() {
-//        draw(i, v);
-//    }
-//}
+fn play(mut board: Board) -> bool {
+    println!("Insert:0 <index> <number> \nRemove:1 <0-80>");
+    loop {
+        board.print_board();
+
+        let mut action = String::new();
+        io::stdin().read_line(&mut action)
+            .ok()
+            .expect("failed to read line");
+
+        let words: Vec<i32> = action
+            .split_whitespace()
+            .map(|s| s.parse().unwrap())
+            .collect();
+
+        if words[0] == 0 {
+            println!("w");
+            let _b = board.insert(words[1] as usize, words[2]);
+        } else if words[0] == 1 {
+            let _b = board.remove(words[1] as usize);
+        } else {
+            println!("Insert:0 <index> <number> \nRemove:1 <0-80>");
+        }
+
+
+        if board.is_solved() { return true };
+    }
+}
+
+fn shell() {
+    println!("Hi and welcome to rustdoku!");
+    println!("Please choose sudoku game (1-9)");
+
+    let mut game = String::new();
+
+    io::stdin().read_line(&mut game)
+        .ok()
+        .expect("failed to read line");
+
+    let game: u32 = game.trim().parse()
+        .ok()
+        .expect("Please type a number!");
+    let mut f = match game {
+        1 => File::open("sudokus/1.txt").ok().expect("failed fileopen"),
+        _ => File::open("sudokus/1.txt").ok().expect("failed fileopen"),
+    };
+
+    let mut s = String::new();
+    f.read_to_string(&mut s).ok().expect("failed read_to_string");
+
+    let c: Vec<i32> = s
+        .split_whitespace()
+        .map(|s| s.parse().unwrap())
+        .collect();
+
+    let mut board = Board::new(c);
+
+    play(board);
+}
+
+fn main() {
+    let c:[i32; 81] = [
+        0,0,1,7,0,0,5,0,9,
+        5,7,3,0,2,4,1,0,6,
+        8,0,0,5,0,1,0,0,2,
+        7,0,0,2,9,5,0,1,8,
+        0,0,9,4,0,0,3,0,5,
+        6,5,2,8,0,0,0,0,7,
+        4,6,5,0,8,0,0,7,1,
+        0,0,0,1,5,9,0,0,4,
+        9,0,8,0,0,7,0,5,3];
+
+
+    //let mut b = Board::new(c);
+    shell();
+    //b.print_board();
+    //if !b.insert(0, 9) { println!("Not legal"); } else { println!("Legal move"); }
+    //println!("Holes: {}", b.holes);
+    //b.remove(3); b.remove(4);
+    //b.print_board();
+
+    //let v = [9;2];
+    //for i in v.iter() {
+    //    println!("{}", i);
+    //}
+}

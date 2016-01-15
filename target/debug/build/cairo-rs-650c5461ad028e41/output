@@ -1,0 +1,1 @@
+cargo:rustc-cfg=cairo_1_12
