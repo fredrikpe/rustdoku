@@ -100,18 +100,11 @@ impl Board {
     }
 }
 
-struct Cell {
-    value: i32, // 0 = blank, 1-9
-}
-impl Cell {
-    fn new(value: i32) -> Cell { Cell { value: value }}
-    fn get_value(&self) -> i32 { self.value }
-}
-
 fn play(mut board: Board) -> bool {
     println!("Insert:0 <index> <number> \nRemove:1 <0-80>");
+    board.print_board();
     loop {
-        board.print_board();
+
 
         let mut action = String::new();
         io::stdin().read_line(&mut action)
@@ -124,16 +117,24 @@ fn play(mut board: Board) -> bool {
             .collect();
 
         if words[0] == 0 {
-            println!("w");
-            let _b = board.insert(words[1] as usize, words[2]);
+            if board.insert(words[1] as usize, words[2]) {
+                println!("Insertion successful!");
+                board.print_board();
+            } else {
+                println!("Illegal insertion!")
+            }
         } else if words[0] == 1 {
-            let _b = board.remove(words[1] as usize);
+            println!("Removal successful!");
+            board.print_board();
         } else {
             println!("Insert:0 <index> <number> \nRemove:1 <0-80>");
         }
 
 
-        if board.is_solved() { return true };
+        if board.is_solved() {
+            println!("Congratulations!");
+            return true
+        };
     }
 }
 
