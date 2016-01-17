@@ -3,3 +3,5 @@ name = "rustdoku"
 version = "0.1.0"
 authors = ["Fredrik Ingebrigtsen <fredrikpei@gmail.com>"]
 
+[dependencies]
+sdl2 = "0.9"
