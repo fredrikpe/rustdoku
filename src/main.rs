@@ -100,6 +100,7 @@ impl Board {
     }
 }
 
+
 fn play(mut board: Board) -> bool {
     println!("Insert:0 <index> <number> \nRemove:1 <0-80>");
     board.print_board();
@@ -111,19 +112,17 @@ fn play(mut board: Board) -> bool {
             .ok()
             .expect("failed to read line");
 
-        let words: Vec<i32> = action
-            .split_whitespace()
-            .map(|s| s.parse().unwrap())
-            .collect();
+        let words:Vec<&str> = action.split_whitespace().collect();
 
-        if words[0] == 0 {
-            if board.insert(words[1] as usize, words[2]) {
+        if words[0] == "0" {
+                if board.insert(words[1].parse::<usize>().unwrap(), words[2].parse::<i32>().unwrap()) {
                 println!("Insertion successful!");
                 board.print_board();
             } else {
                 println!("Illegal insertion!")
             }
-        } else if words[0] == 1 {
+        } else if words[0] == "1" {
+            board.remove(words[1].parse::<usize>().unwrap());
             println!("Removal successful!");
             board.print_board();
         } else {
