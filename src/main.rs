@@ -3,9 +3,7 @@ extern crate sdl2;
 mod phi;
 mod views;
 
-use ::sdl2::pixels::Color;
-use ::phi::Events;
-
+use ::phi::{Events, Phi, View, ViewAction};
 
 fn main() {
     // Initialize SDL2
@@ -13,27 +11,26 @@ fn main() {
     let video = sdl_context.video().unwrap();
 
     // Create the window
-    let window = video.window("ArcadeRS Shooter", 800, 600)
+    let window = video.window("RustDoku", 800, 600)
         .position_centered().opengl()
         .build().unwrap();
 
-    let mut renderer = window.renderer()
-        .accelerated()
-        .build().unwrap();
+    let mut context = Phi {
+        events: Events::new(sdl_context.event_pump().unwrap()),
+        renderer: window.renderer()
+            .accelerated()
+            .build().unwrap(),
+    };
 
-    let mut events = Events::new(sdl_context.event_pump().unwrap());
+    let mut current_view: Box<View> = Box::new(::views::DefaultView);
+
 
     loop {
-        events.pump();
+        context.events.pump();
 
-        if events.now.key_escape == Some(true) || events.now.quit == true {
-            break;
+        match current_view.render(&mut context, 0.01) {
+            ViewAction::None => context.renderer.present(),
+            ViewAction::Quit => break,
         }
-
-        // Render a fully black window
-        renderer.set_draw_color(Color::RGB(0, 0, 0));
-        renderer.clear();
-        renderer.present();
     }
-
 }
