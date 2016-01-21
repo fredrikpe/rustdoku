@@ -5,3 +5,4 @@ authors = ["Fredrik Ingebrigtsen <fredrikpei@gmail.com>"]
 
 [dependencies]
 sdl2 = "0.9"
+sdl2_ttf = "0.9"
