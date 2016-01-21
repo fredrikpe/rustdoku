@@ -5,6 +5,7 @@ extern crate sdl2_ttf;
 
 mod phi;
 mod views;
+mod logic;
 
 
 fn main() {

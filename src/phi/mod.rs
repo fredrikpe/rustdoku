@@ -26,7 +26,22 @@ struct_events!{
         key_escape: Escape,
         key_up: Up,
         key_down: Down,
-        key_space: Space
+        key_space: Space,
+        key_left: Left,
+        key_right: Right,
+        key_del: Delete,
+
+        key_0: Num0,
+        key_1: Num1,
+        key_2: Num2,
+        key_3: Num3,
+        key_4: Num4,
+        key_5: Num5,
+        key_6: Num6,
+        key_7: Num7,
+        key_8: Num8,
+        key_9: Num9
+
     },
     else: {
         quit: Quit { .. }
@@ -83,7 +98,7 @@ where F: Fn(&mut Phi) -> Box<View> {
         fps += 1;
 
         if now - last_second > 1_000 {
-            println!("FPS: {}", fps);
+            //println!("FPS: {}", fps);
             last_second = now;
             fps = 0;
         }
