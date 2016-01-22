@@ -30,6 +30,16 @@ struct_events!{
         key_left: Left,
         key_right: Right,
         key_del: Delete,
+        key_minus: Minus,
+        key_plus: Plus,
+        key_r_shift: RShift,
+        key_l_shift: LShift,
+
+        key_f: F,
+        key_c: C,
+        key_b: B,
+        key_r: R,
+        key_g: G,
 
         key_0: Num0,
         key_1: Num1,

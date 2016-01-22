@@ -6,14 +6,14 @@ use std::fs::File;
 
 #[derive(Clone, Copy)]
 pub struct Cell {
-    marks: [bool; 9],
+    pub marks: [bool; 10],
     pub number: i32,
 }
 
 impl Cell {
     pub fn new() -> Cell {
         Cell {
-            marks: [false; 9],
+            marks: [false; 10],
             number: 0,
         }
     }
@@ -52,12 +52,18 @@ impl Board {
         }
     }
 
-    pub fn insert(&mut self, pos: usize, value: i32) -> bool {
+    pub fn mark(&mut self, pos: usize, m: usize) {
+        if self.cells[pos].number == 0 {
+            self.cells[pos].marks[m] = !self.cells[pos].marks[m];
+        }
+    }
+
+    pub fn insert(&mut self, pos: usize, value: i32) {
         if value != 0 && self.legal(pos, value) {
            self.cells[pos].number = value;
+           self.cells[pos].marks = [false; 10];
            self.holes -= 1;
-           true
-        } else { false }
+        }
     }
 
     pub fn legal(&self, pos: usize, value: i32) -> bool {
@@ -132,7 +138,8 @@ fn play(mut board: Board) -> bool {
         let words:Vec<&str> = action.split_whitespace().collect();
 
         if words[0] == "0" {
-                if board.insert(words[1].parse::<usize>().unwrap(), words[2].parse::<i32>().unwrap()) {
+            board.insert(words[1].parse::<usize>().unwrap(), words[2].parse::<i32>().unwrap());
+            if board.cells[words[1].parse::<usize>().unwrap()].number ==  words[2].parse::<i32>().unwrap() {
                 println!("Insertion successful!");
                 board.print_board();
             } else {
