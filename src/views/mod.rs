@@ -24,7 +24,7 @@ pub struct BoardView {
 
 
 impl BoardView {
-    pub fn new(phi: &mut Phi) -> BoardView {
+    pub fn new(phi: &mut Phi, board: i32) -> BoardView {
         BoardView {
             board: Board::new(),
             focus: 0,

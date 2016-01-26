@@ -27,9 +27,25 @@ pub struct Board {
 
 impl Board {
     pub fn new() -> Board {
+        let mut f = File::open("sudokus/1.txt").ok().expect("failed fileopen");
+
+        let mut s = String::new();
+        f.read_to_string(&mut s).ok().expect("failed read_to_string");
+
+        let c: Vec<i32> = s
+            .split_whitespace()
+            .map(|s| s.parse().unwrap())
+            .collect();
+               
+        let mut cells = [Cell::new(); 81];
+        let mut holes = 0;
+        for (i, n) in c.iter().enumerate() {
+            cells[i].number = *n;
+            if *n == 0 { holes += 1; }
+        }
         Board {
-            cells: [Cell::new(); 81],
-            holes: 0,
+            cells: cells,
+            holes: holes,
         }
     }
 

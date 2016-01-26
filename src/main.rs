@@ -2,7 +2,6 @@
 extern crate sdl2;
 extern crate sdl2_ttf;
 
-
 mod phi;
 mod views;
 mod logic;
@@ -10,6 +9,6 @@ mod logic;
 
 fn main() {
     ::phi::spawn("RustDoku", |phi| {
-        Box::new(::views::BoardView::new(phi))
+        Box::new(::views::BoardView::new(phi, 1))
     });
 }
