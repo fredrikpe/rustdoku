@@ -4,17 +4,20 @@ use std::io::prelude::*;
 use std::io;
 use std::fs::File;
 
+
 #[derive(Clone, Copy)]
 pub struct Cell {
     pub marks: [bool; 10],
     pub number: i32,
+    pub read_only: bool,
 }
 
 impl Cell {
-    pub fn new() -> Cell {
+    pub fn new(ro: bool) -> Cell {
         Cell {
             marks: [false; 10],
             number: 0,
+            read_only: ro,
         }
     }
 }
@@ -37,11 +40,14 @@ impl Board {
             .map(|s| s.parse().unwrap())
             .collect();
                
-        let mut cells = [Cell::new(); 81];
+        let mut cells = [Cell::new(true); 81];
         let mut holes = 0;
         for (i, n) in c.iter().enumerate() {
             cells[i].number = *n;
-            if *n == 0 { holes += 1; }
+            if *n == 0 { 
+               cells[i].read_only = false;
+               holes += 1;
+            }
         }
         Board {
             cells: cells,
@@ -53,7 +59,10 @@ impl Board {
         self.holes = 0;
         for (i, n) in board.iter().enumerate() {
             self.cells[i].number = *n;
-            if *n == 0 { self.holes += 1; }
+            if *n == 0 { 
+               self.cells[i].read_only = false;
+               self.holes += 1;
+            }
         }
     }
 
@@ -62,7 +71,7 @@ impl Board {
     }
 
     pub fn remove(&mut self, pos: usize) {
-        if self.cells[pos].number != 0 {
+        if !self.cells[pos].read_only && self.cells[pos].number != 0 {
             self.cells[pos].number = 0;
             self.holes += 1;
         }
@@ -75,7 +84,7 @@ impl Board {
     }
 
     pub fn insert(&mut self, pos: usize, value: i32) {
-        if value != 0 && self.legal(pos, value) {
+        if !self.cells[pos].read_only && value != 0 && self.legal(pos, value) {
            self.cells[pos].number = value;
            self.cells[pos].marks = [false; 10];
            self.holes -= 1;

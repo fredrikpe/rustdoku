@@ -115,7 +115,12 @@ impl View for BoardView {
             if cell.number != 0 {
                 let text = cell.number.to_string();
                 let text = &text[..];
-                let surface = font.render(text, ::sdl2_ttf::blended(Color::RGB(0, 0, 0))).unwrap();
+                let surface;
+                if cell.read_only {
+                    surface = font.render(text, ::sdl2_ttf::blended(Color::RGB(0, 0, 0))).unwrap();
+                } else {
+                    surface = font.render(text, ::sdl2_ttf::blended(Color::RGB(0, 0, 255))).unwrap();
+                }
                 let texture = phi.renderer.create_texture_from_surface(&surface).unwrap();
                 phi.renderer.copy(&texture, None, Rect::new(17+(i as i32%9)*50, 17+(i as i32/9)*50, 36, 36).unwrap());
             }
