@@ -1,5 +1,6 @@
 # rustdoku
 Sudoku in Rust.
 
-Couldn't get GUI working so for now just a console app.
-TODO: GUI and solver.
+Work in progress.
+Simple GUI, started on solver. 
+TODO: generator see http://zhangroup.aporc.org/images/files/Paper_3485.pdf
