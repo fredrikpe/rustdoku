@@ -41,6 +41,11 @@ struct_events!{
         key_r: R,
         key_g: G,
 
+        key_j: J,
+        key_k: K,
+        key_l: L,
+        key_h: H,
+
         key_0: Num0,
         key_1: Num1,
         key_2: Num2,
@@ -89,6 +94,8 @@ where F: Fn(&mut Phi) -> Box<View> {
     let mut before = timer.ticks();
     let mut last_second = timer.ticks();
     let mut fps = 0u16;
+
+    
 
     loop {
         // Frame timing (bis)

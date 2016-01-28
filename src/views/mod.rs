@@ -1,9 +1,14 @@
 
+
+use std::thread::sleep;
+use std::time::Duration;
+
 use ::phi::{Phi, View, ViewAction};
 use ::sdl2::pixels::Color;
 use ::sdl2::rect::{Point, Rect};
 use ::std::path::Path;
 use ::logic::{Board, Cell};
+use ::logic::board::Mark;
 
 pub struct MenuView;
 
@@ -20,6 +25,7 @@ pub struct BoardView {
     highlight: i32,
     colored: Vec<(usize, i32)>,
     mode: Mode,
+    is_marked: bool,
 }
 
 
@@ -31,8 +37,17 @@ impl BoardView {
             highlight: -1,
             colored: Vec::new(),
             mode: Mode::Normal,
+            is_marked: false,
         }
     }
+
+    /*fn fill_marks(&mut self) {
+        if !self.is_marked {
+            self.board.fill_marks();
+            self.is_marked = true;
+        }
+    }*/
+
     fn move_focus(&mut self, i: i32) {
         match i {
             1 => if self.focus < 80 { self.focus += 1 },
@@ -60,6 +75,12 @@ impl View for BoardView {
             return ViewAction::Quit;
         }
 
+        // Initialize board
+        self.board.fill_marks();
+        self.board.solve_singles();
+            //sleep(Duration::from_millis(30));
+        
+
 
         // Clear the screen
         phi.renderer.set_draw_color(Color::RGB(255, 255, 255));
@@ -70,7 +91,7 @@ impl View for BoardView {
         if self.highlight > 0 {
             phi.renderer.set_draw_color(Color::RGB(200, 200, 200));
             for (i, cell) in self.board.cells.iter().enumerate() {
-                if cell.number == self.highlight || (cell.number == 0 && cell.marks[self.highlight as usize]) {
+                if cell.number == self.highlight || (cell.number == 0 && cell.marks[self.highlight as usize] == Mark::Marked) {
                     phi.renderer.fill_rect(Rect::new(10 + 50*(i as i32 % 9),
                                 10 + 50*(i as i32 /9), 50, 50).unwrap().unwrap());
                 }
@@ -128,8 +149,8 @@ impl View for BoardView {
         // small numbers (marks)
         let font = ::sdl2_ttf::Font::from_file(Path::new("assets/arial.ttf"), 60).unwrap();
         for (i, cell) in self.board.cells.iter().enumerate() {
-            for (j, &b) in cell.marks.iter().enumerate() {
-                if b {
+            for (j, &m) in cell.marks.iter().enumerate() {
+                if m == Mark::Marked {
                     let j = j as i32;
                     let text = j.to_string();
                     let text = &text[..];
@@ -146,13 +167,13 @@ impl View for BoardView {
         if phi.events.now.quit || Some(true) == phi.events.now.key_escape {
             return ViewAction::Quit;
         }
-        if Some(true) == phi.events.now.key_up {
+        if Some(true) == phi.events.now.key_up || Some(true) == phi.events.now.key_k {
             self.move_focus(-9);
-        } if Some(true) == phi.events.now.key_down {
+        } if Some(true) == phi.events.now.key_down || Some(true) == phi.events.now.key_j {
             self.move_focus(9);
-        } if Some(true) == phi.events.now.key_left {
+        } if Some(true) == phi.events.now.key_left || Some(true) == phi.events.now.key_h {
             self.move_focus(-1);
-        } if Some(true) == phi.events.now.key_right {
+        } if Some(true) == phi.events.now.key_right || Some(true) == phi.events.now.key_l {
             self.move_focus(1);
         }
 
@@ -162,6 +183,12 @@ impl View for BoardView {
         }
         if Some(true) == phi.events.now.key_r_shift || Some(true) == phi.events.now.key_l_shift {
             self.mode = Mode::Highlight;
+        }
+
+        if Some(true) == phi.events.now.key_f {
+            if self.highlight > 0 {
+                self.board.insert(self.focus, self.highlight);
+            }
         }
 
         if Some(true) == phi.events.now.key_1 {
