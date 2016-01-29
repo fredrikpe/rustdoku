@@ -19,9 +19,10 @@ mod settings;
 pub struct MenuView;
 
 #[derive(PartialEq)]
-enum Mode {
-    Traditional,
-    Auto,
+enum Helper {
+    Off     = 0,
+    Marks   = 1,
+    On      = 2,
 }
 
 enum InsertMode {
@@ -35,7 +36,7 @@ pub struct BoardView {
     focus: usize,
     highlight: i32,
     square_colores: [::sdl2::pixels::Color; 81],
-    mode: Mode,
+    helper: Helper,
     insert_mode: InsertMode,
 }
 
@@ -48,7 +49,7 @@ impl BoardView {
             highlight: -1,
             square_colores: [settings::WHITE; 81],
             insert_mode: InsertMode::Mark,
-            mode: Mode::Auto,
+            helper: Helper::Marks,
         }
     }
 
@@ -80,10 +81,10 @@ impl View for BoardView {
         }
 
         // Initialize board
-        if self.mode == Mode::Auto {
-            self.board.fill_marks();
-            self.board.solve_singles();
-            //sleep(Duration::from_millis(30));
+        match self.helper {
+            Helper::Marks => self.board.fill_marks(),
+            Helper::On => { self.board.fill_marks(); self.board.solve_singles() },
+            Helper::Off => (),
         }
 
 
