@@ -169,34 +169,24 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-29
+33
 normal! zo
-30
+34
 normal! zo
-41
+73
 normal! zo
-69
+74
 normal! zo
-70
+136
 normal! zo
-84
+137
 normal! zo
-86
-normal! zo
-144
-normal! zo
-145
-normal! zo
-146
-normal! zo
-181
-normal! zo
-let s:l = 89 - ((31 * winheight(0) + 27) / 54)
+let s:l = 84 - ((9 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-89
-normal! 017|
+84
+normal! 0
 tabedit src/logic/mod.rs
 set splitbelow splitright
 set nosplitbelow
@@ -314,7 +304,7 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-let s:l = 6 - ((5 * winheight(0) + 27) / 54)
+let s:l = 6 - ((4 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -439,7 +429,7 @@ setlocal wrap
 setlocal wrapmargin=0
 25
 normal! zo
-let s:l = 47 - ((46 * winheight(0) + 27) / 54)
+let s:l = 47 - ((35 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
@@ -590,13 +580,13 @@ normal! zo
 normal! zo
 117
 normal! zo
-let s:l = 74 - ((41 * winheight(0) + 27) / 54)
+let s:l = 65 - ((3 * winheight(0) + 20) / 41)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-74
+65
 normal! 017|
-tabnext 4
+tabnext 1
 if exists('s:wipebuf')
   silent exe 'bwipe ' . s:wipebuf
 endif
