@@ -35,12 +35,16 @@ struct_events!{
         key_r_shift: RShift,
         key_l_shift: LShift,
 
+        // Fill
         key_f: F,
-        key_c: C,
+
+        // Colores
+        key_v: V,
         key_b: B,
         key_r: R,
         key_g: G,
 
+        // Move
         key_j: J,
         key_k: K,
         key_l: L,
@@ -95,7 +99,7 @@ where F: Fn(&mut Phi) -> Box<View> {
     let mut last_second = timer.ticks();
     let mut fps = 0u16;
 
-    
+
 
     loop {
         // Frame timing (bis)

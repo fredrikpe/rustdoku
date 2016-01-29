@@ -2,51 +2,55 @@
 
 use std::thread::sleep;
 use std::time::Duration;
+use std::fs::File;
+use std::io::prelude::*;
+
 
 use ::phi::{Phi, View, ViewAction};
-use ::sdl2::pixels::Color;
 use ::sdl2::rect::{Point, Rect};
 use ::std::path::Path;
+
 use ::logic::{Board, Cell};
 use ::logic::board::Mark;
 
+
+mod settings;
+
 pub struct MenuView;
 
+#[derive(PartialEq)]
 enum Mode {
-    Normal      = 0,
-    Mark        = 1,
-    Highlight   = 2,
+    Traditional,
+    Auto,
 }
 
+enum InsertMode {
+    Normal,
+    Mark,
+    Highlight,
+}
 
 pub struct BoardView {
     board: Board,
     focus: usize,
     highlight: i32,
-    colored: Vec<(usize, i32)>,
+    square_colores: [::sdl2::pixels::Color; 81],
     mode: Mode,
-    is_marked: bool,
+    insert_mode: InsertMode,
 }
 
 
 impl BoardView {
     pub fn new(phi: &mut Phi, board: i32) -> BoardView {
         BoardView {
-            board: Board::new(),
+            board: Board::new(board_from_file(board)),
             focus: 0,
             highlight: -1,
-            colored: Vec::new(),
-            mode: Mode::Normal,
-            is_marked: false,
+            square_colores: [settings::WHITE; 81],
+            insert_mode: InsertMode::Mark,
+            mode: Mode::Auto,
         }
     }
-
-    /*fn fill_marks(&mut self) {
-        if !self.is_marked {
-            self.board.fill_marks();
-            self.is_marked = true;
-        }
-    }*/
 
     fn move_focus(&mut self, i: i32) {
         match i {
@@ -58,14 +62,14 @@ impl BoardView {
         };
     }
     fn num_press(&mut self, num: i32) {
-        match self.mode {
-            Mode::Mark => self.board.mark(self.focus, num as usize),
-            Mode::Highlight => if self.highlight == num {
+        match self.insert_mode {
+            InsertMode::Mark => self.board.mark(self.focus, num as usize),
+            InsertMode::Highlight => if self.highlight == num {
                 self.highlight = -1
                 } else { self.highlight = num},
             _ => self.board.insert(self.focus, num),
         };
-        self.mode = Mode::Normal;
+        self.insert_mode = InsertMode::Mark;
     }
 }
 
@@ -76,38 +80,49 @@ impl View for BoardView {
         }
 
         // Initialize board
-        self.board.fill_marks();
-        self.board.solve_singles();
+        if self.mode == Mode::Auto {
+            self.board.fill_marks();
+            self.board.solve_singles();
             //sleep(Duration::from_millis(30));
-        
+        }
 
 
         // Clear the screen
-        phi.renderer.set_draw_color(Color::RGB(255, 255, 255));
+        phi.renderer.set_draw_color(settings::WHITE);
         phi.renderer.clear();
 
 
+
+        // Color squares
+        for (i, c) in self.square_colores.iter().enumerate() {
+            phi.renderer.set_draw_color(*c);
+            phi.renderer.fill_rect(Rect::new(11 + 50*(i as i32 % 9),
+                11 + 50*(i as i32 /9), 49, 49).unwrap().unwrap());
+        }
         // highlight - greyish
         if self.highlight > 0 {
-            phi.renderer.set_draw_color(Color::RGB(200, 200, 200));
+            phi.renderer.set_draw_color(settings::SAND);
             for (i, cell) in self.board.cells.iter().enumerate() {
                 if cell.number == self.highlight || (cell.number == 0 && cell.marks[self.highlight as usize] == Mark::Marked) {
-                    phi.renderer.fill_rect(Rect::new(10 + 50*(i as i32 % 9),
-                                10 + 50*(i as i32 /9), 50, 50).unwrap().unwrap());
+                    if self.square_colores[i] == settings::WHITE {
+                        phi.renderer.fill_rect(Rect::new(11 + 50*(i as i32 % 9),
+                                    11 + 50*(i as i32 /9), 49, 49).unwrap().unwrap());
+                    }
                 }
             }
         }
         // focus - red outline
-        phi.renderer.set_draw_color(Color::RGB(255, 0, 0));
+        phi.renderer.set_draw_color(::sdl2::pixels::Color::RGB(255, 0, 0));
         phi.renderer.draw_rect(Rect::new(11 + 50*(self.focus as i32 % 9),
             11 + 50*(self.focus as i32 /9), 49, 49).unwrap().unwrap());
         phi.renderer.draw_rect(Rect::new(12 + 50*(self.focus as i32 % 9),
             12 + 50*(self.focus as i32 /9), 47, 47).unwrap().unwrap());
-        // colored
+
+
 
 
         // Lines
-        phi.renderer.set_draw_color(Color::RGB(0, 0, 0));
+        phi.renderer.set_draw_color(settings::BLACK);
         let outer_box = [Point::new(8,8), Point::new(8, 462), Point::new(462,462),
             Point::new(462, 8), Point::new(8,8), Point::new(9,9), Point::new(9, 461),
             Point::new(461,461), Point::new(461, 9), Point::new(9,9), Point::new(10,10),
@@ -138,9 +153,9 @@ impl View for BoardView {
                 let text = &text[..];
                 let surface;
                 if cell.read_only {
-                    surface = font.render(text, ::sdl2_ttf::blended(Color::RGB(0, 0, 0))).unwrap();
+                    surface = font.render(text, ::sdl2_ttf::blended(settings::BLACK)).unwrap();
                 } else {
-                    surface = font.render(text, ::sdl2_ttf::blended(Color::RGB(0, 0, 255))).unwrap();
+                    surface = font.render(text, ::sdl2_ttf::blended(settings::BLUE)).unwrap();
                 }
                 let texture = phi.renderer.create_texture_from_surface(&surface).unwrap();
                 phi.renderer.copy(&texture, None, Rect::new(17+(i as i32%9)*50, 17+(i as i32/9)*50, 36, 36).unwrap());
@@ -154,7 +169,7 @@ impl View for BoardView {
                     let j = j as i32;
                     let text = j.to_string();
                     let text = &text[..];
-                    let surface = font.render(text, ::sdl2_ttf::blended(Color::RGB(0, 0, 0))).unwrap();
+                    let surface = font.render(text, ::sdl2_ttf::blended(settings::BLACK)).unwrap();
                     let texture = phi.renderer.create_texture_from_surface(&surface).unwrap();
                     phi.renderer.copy(&texture, None, Rect::new((j-1)%3*16 + 13 + (i as i32%9)*50,
                                             (j-1)/3*16 + 13 + (i as i32/9)*50, 11, 11).unwrap());
@@ -178,19 +193,51 @@ impl View for BoardView {
         }
 
         // set modes
-        if Some(true) == phi.events.now.key_minus || Some(true) == phi.events.now.key_plus {
-            self.mode = Mode::Mark;
+        if Some(true) == phi.events.now.key_space {
+            match self.insert_mode {
+                InsertMode::Normal  => self.insert_mode = InsertMode::Mark,
+                _                   => self.insert_mode = InsertMode::Normal,
+            }
         }
         if Some(true) == phi.events.now.key_r_shift || Some(true) == phi.events.now.key_l_shift {
-            self.mode = Mode::Highlight;
+            self.insert_mode = InsertMode::Highlight;
         }
 
+        // Fill square
         if Some(true) == phi.events.now.key_f {
             if self.highlight > 0 {
                 self.board.insert(self.focus, self.highlight);
             }
         }
 
+        // Colores
+        if Some(true) == phi.events.now.key_r {
+            if self.square_colores[self.focus] == settings::SKIN {
+                self.square_colores[self.focus] = settings::WHITE;
+            } else {
+                self.square_colores[self.focus] = settings::SKIN;
+            }
+        } if Some(true) == phi.events.now.key_b {
+            if self.square_colores[self.focus] == settings::CYAN {
+                self.square_colores[self.focus] = settings::WHITE;
+            } else {
+                self.square_colores[self.focus] = settings::CYAN;
+            }
+        } if Some(true) == phi.events.now.key_g {
+            if self.square_colores[self.focus] == settings::LIME {
+                self.square_colores[self.focus] = settings::WHITE;
+            } else {
+                self.square_colores[self.focus] = settings::LIME;
+            }
+        } if Some(true) == phi.events.now.key_v {
+            if self.square_colores[self.focus] == settings::VIOLET {
+                self.square_colores[self.focus] = settings::WHITE;
+            } else {
+                self.square_colores[self.focus] = settings::VIOLET;
+            }
+        }
+
+        // Number pressed
         if Some(true) == phi.events.now.key_1 {
             self.num_press(1);
         } if Some(true) == phi.events.now.key_2 {
@@ -217,13 +264,14 @@ impl View for BoardView {
     }
 }
 
-/*
-fn orSome(a: Option<bool>, b: Option<bool>) -> Option<bool> {
-    match a {
-        None => None,
-        Some(a_val) => match b {
-            None => Some(a_val),
-            Some(b_val) => Some(a_val || b_val)
-        }
-    }
-}*/
+
+fn board_from_file(num: i32) -> Vec<i32> {
+    let filename = format!("sudokus/{}.txt", num);
+    let mut f = File::open(filename).ok().expect("failed fileopen");
+    let mut s = String::new();
+    f.read_to_string(&mut s).ok().expect("failed read_to_string");
+
+    s.split_whitespace()
+     .map(|s| s.parse().unwrap())
+     .collect()
+}

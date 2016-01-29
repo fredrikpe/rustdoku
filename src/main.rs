@@ -9,6 +9,6 @@ mod logic;
 
 fn main() {
     ::phi::spawn("RustDoku", |phi| {
-        Box::new(::views::BoardView::new(phi, 1))
+        Box::new(::views::BoardView::new(phi, 2))
     });
 }

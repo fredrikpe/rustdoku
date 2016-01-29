@@ -1,14 +1,14 @@
 
 
-use std::io::prelude::*;
-use std::io;
-use std::fs::File;
+//use std::io::prelude::*;
+//use std::io;
+
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Mark {
     Marked,
     Unmarked,
-    Not_Marked,
+    NotMarked,
 }
 
 #[derive(Clone, Copy)]
@@ -21,7 +21,7 @@ pub struct Cell {
 impl Cell {
     pub fn new(ro: bool) -> Cell {
         Cell {
-            marks: [Mark::Not_Marked; 10],
+            marks: [Mark::NotMarked; 10],
             number: 0,
             read_only: ro,
         }
@@ -35,20 +35,10 @@ pub struct Board {
 }
 
 impl Board {
-    pub fn new() -> Board {
-        // TODO: Specify which sudoku to open.
-        let mut f = File::open("sudokus/2.txt").ok().expect("failed fileopen");
-        let mut s = String::new();
-        f.read_to_string(&mut s).ok().expect("failed read_to_string");
-
-        let c: Vec<i32> = s
-            .split_whitespace()
-            .map(|s| s.parse().unwrap())
-            .collect();
-
+    pub fn new(board_vec: Vec<i32>) -> Board {
         let mut cells = [Cell::new(true); 81];
         let mut holes = 0;
-        for (i, n) in c.iter().enumerate() {
+        for (i, n) in board_vec.iter().enumerate() {
             cells[i].number = *n;
             if *n == 0 {
                cells[i].read_only = false;
@@ -87,7 +77,7 @@ impl Board {
                         if self.legal(i as usize, j) {
                             self.cells[i as usize].marks[j as usize] = Mark::Marked;
                         } else {
-                            self.cells[i as usize].marks[j as usize] = Mark::Not_Marked;
+                            self.cells[i as usize].marks[j as usize] = Mark::NotMarked;
                         }
                     }
                 }
@@ -111,7 +101,6 @@ impl Board {
         self.holes == 0
     }
 
-
     pub fn mark(&mut self, pos: usize, m: usize) {
         if self.cells[pos].number == 0 && self.legal(pos, m as i32) {
             if self.cells[pos].marks[m] == Mark::Marked {
@@ -132,7 +121,7 @@ impl Board {
     pub fn insert(&mut self, pos: usize, value: i32) {
         if !self.cells[pos].read_only && value != 0 && self.legal(pos, value) {
            self.cells[pos].number = value;
-           self.cells[pos].marks = [Mark::Not_Marked; 10];
+           self.cells[pos].marks = [Mark::NotMarked; 10];
            self.holes -= 1;
         }
     }
@@ -192,74 +181,4 @@ impl Board {
         }
         println!("");
     }
-}
-
-
-fn play(mut board: Board) -> bool {
-    println!("Insert:0 <index> <number> \nRemove:1 <0-80>");
-    board.print_board();
-    loop {
-
-
-        let mut action = String::new();
-        io::stdin().read_line(&mut action)
-            .ok()
-            .expect("failed to read line");
-
-        let words:Vec<&str> = action.split_whitespace().collect();
-
-        if words[0] == "0" {
-            board.insert(words[1].parse::<usize>().unwrap(), words[2].parse::<i32>().unwrap());
-            if board.cells[words[1].parse::<usize>().unwrap()].number ==  words[2].parse::<i32>().unwrap() {
-                println!("Insertion successful!");
-                board.print_board();
-            } else {
-                println!("Illegal insertion!")
-            }
-        } else if words[0] == "1" {
-            board.remove(words[1].parse::<usize>().unwrap());
-            println!("Removal successful!");
-            board.print_board();
-        } else {
-            println!("Insert:0 <index> <number> \nRemove:1 <0-80>");
-        }
-
-
-        if board.is_solved() {
-            println!("Congratulations!");
-            return true
-        };
-    }
-}
-
-fn shell() {
-    println!("Hi and welcome to rustdoku!");
-    println!("Please choose sudoku game (1-9)");
-
-    let mut game = String::new();
-
-    io::stdin().read_line(&mut game)
-        .ok()
-        .expect("failed to read line");
-
-    let game: u32 = game.trim().parse()
-        .ok()
-        .expect("Please type a number!");
-    let mut f = match game {
-        1 => File::open("sudokus/1.txt").ok().expect("failed fileopen"),
-        _ => File::open("sudokus/1.txt").ok().expect("failed fileopen"),
-    };
-
-    let mut s = String::new();
-    f.read_to_string(&mut s).ok().expect("failed read_to_string");
-
-    let c: Vec<i32> = s
-        .split_whitespace()
-        .map(|s| s.parse().unwrap())
-        .collect();
-
-    let mut board = Board::new();
-    board.fill_board(c);
-
-    play(board);
 }
