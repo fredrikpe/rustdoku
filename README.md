@@ -4,3 +4,5 @@ Sudoku in Rust.
 Work in progress.
 Simple GUI, started on solver. 
 TODO: generator see http://zhangroup.aporc.org/images/files/Paper_3485.pdf
+
+![alt tag](https://raw.github.com/fredrikpe/rustdoku/pics/rustdoku.png)
