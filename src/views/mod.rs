@@ -212,6 +212,12 @@ impl View for BoardView {
         }
 
         // Colores
+        if Some(true) == phi.events.now.key_c {
+            //for sc in self.square_colores.iter() {
+            //    sc = settings::WHITE;
+            //}
+            self.square_colores = [settings::WHITE; 81];
+        } 
         if Some(true) == phi.events.now.key_r {
             if self.square_colores[self.focus] == settings::SKIN {
                 self.square_colores[self.focus] = settings::WHITE;

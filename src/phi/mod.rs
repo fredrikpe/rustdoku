@@ -39,6 +39,7 @@ struct_events!{
         key_f: F,
 
         // Colores
+        key_c: C,
         key_v: V,
         key_b: B,
         key_r: R,
