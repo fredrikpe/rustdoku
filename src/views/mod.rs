@@ -25,6 +25,11 @@ enum Helper {
     On      = 2,
 }
 
+enum Move {
+    HMove(usize, i32),
+    MMove(usize, i32),
+}
+
 enum InsertMode {
     Normal,
     Mark,
@@ -62,6 +67,14 @@ impl BoardView {
             _ => panic!("Wrong focus move")
         };
     }
+
+    fn undo(&mut self, Move: mov) {
+        match mov {
+            Move::HMove => ,
+            Move::MMove => ,
+        };
+    }
+
     fn num_press(&mut self, num: i32) {
         match self.insert_mode {
             InsertMode::Mark => self.board.mark(self.focus, num as usize),
@@ -213,9 +226,7 @@ impl View for BoardView {
 
         // Colores
         if Some(true) == phi.events.now.key_c {
-            //for sc in self.square_colores.iter() {
-            //    sc = settings::WHITE;
-            //}
+            // Is this slow and unneccesary?
             self.square_colores = [settings::WHITE; 81];
         } 
         if Some(true) == phi.events.now.key_r {
@@ -263,7 +274,9 @@ impl View for BoardView {
             self.num_press(8);
         } if Some(true) == phi.events.now.key_9 {
             self.num_press(9);
-        } if Some(true) == phi.events.now.key_0 || Some(true) == phi.events.now.key_del {
+        } 
+        // Delete number
+        if Some(true) == phi.events.now.key_0 || Some(true) == phi.events.now.key_del {
             self.board.remove(self.focus);
         }
 

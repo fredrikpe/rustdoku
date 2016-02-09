@@ -34,6 +34,7 @@ struct_events!{
         key_plus: Plus,
         key_r_shift: RShift,
         key_l_shift: LShift,
+        key_u: U,
 
         // Fill
         key_f: F,
