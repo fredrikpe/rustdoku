@@ -3,6 +3,9 @@
 
 
 use ::sdl2::pixels::Color;
+use ::sdl2_ttf::Font;
+use ::std::path::Path;
+
 
 pub const WHITE    : Color = Color::RGB(255,255,255);
 pub const BLACK    : Color = Color::RGB(0,0,0);
@@ -21,3 +24,23 @@ pub const SAND     : Color = Color::RGB(255,217,102);
 pub const SKIN     : Color = Color::RGB(255,140,102);
 pub const LIME     : Color = Color::RGB(140,255,102);
 pub const GRASS    : Color = Color::RGB(217,255,102);
+
+pub struct Fonts {
+    pub BIGNUM: Font,
+    pub SMALLNUM: Font,
+    pub BIGFONT: Font,
+    pub SMALLFONT: Font,
+}
+
+impl Fonts {
+    pub fn new() -> Fonts {
+        Fonts {
+            BIGNUM: ::sdl2_ttf::Font::from_file(Path::new("assets/arial.ttf"), 60).unwrap(),
+            SMALLNUM: ::sdl2_ttf::Font::from_file(Path::new("assets/arial.ttf"), 50).unwrap(),
+            BIGFONT: ::sdl2_ttf::Font::from_file(Path::new("assets/arial.ttf"), 60).unwrap(),
+            SMALLFONT: ::sdl2_ttf::Font::from_file(Path::new("assets/arial.ttf"), 50).unwrap(),
+        }
+    }
+    
+}
+   
