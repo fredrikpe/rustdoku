@@ -6,9 +6,9 @@
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Mark {
-    Marked,
+    Legal,
+    Illegal,
     Unmarked,
-    NotMarked,
 }
 
 #[derive(Clone, Copy)]
@@ -21,7 +21,7 @@ pub struct Cell {
 impl Cell {
     pub fn new(ro: bool) -> Cell {
         Cell {
-            marks: [Mark::NotMarked; 10],
+            marks: [Mark::Illegal; 10],
             number: 0,
             read_only: ro,
         }
@@ -57,7 +57,7 @@ impl Board {
                 let mut c = 0;
                 let mut k = 0;
                 for (j, m) in self.cells[i as usize].marks.iter().enumerate() {
-                    if *m == Mark::Marked {
+                    if *m == Mark::Legal {
                         c += 1;
                         k = j;
                     }
@@ -75,9 +75,9 @@ impl Board {
                 for j in 1..10 {
                     if self.cells[i as usize].marks[j as usize] != Mark::Unmarked {
                         if self.legal(i as usize, j) {
-                            self.cells[i as usize].marks[j as usize] = Mark::Marked;
+                            self.cells[i as usize].marks[j as usize] = Mark::Legal;
                         } else {
-                            self.cells[i as usize].marks[j as usize] = Mark::NotMarked;
+                            self.cells[i as usize].marks[j as usize] = Mark::Illegal;
                         }
                     }
                 }
@@ -103,10 +103,10 @@ impl Board {
 
     pub fn mark(&mut self, pos: usize, m: usize) {
         if self.cells[pos].number == 0 && self.legal(pos, m as i32) {
-            if self.cells[pos].marks[m] == Mark::Marked {
+            if self.cells[pos].marks[m] == Mark::Legal {
                 self.cells[pos].marks[m] = Mark::Unmarked;
             } else {
-                self.cells[pos].marks[m] = Mark::Marked;
+                self.cells[pos].marks[m] = Mark::Legal;
             }
         }
     }
@@ -121,18 +121,18 @@ impl Board {
     pub fn insert(&mut self, pos: usize, value: i32) {
         if !self.cells[pos].read_only && value != 0 && self.legal(pos, value) {
            self.cells[pos].number = value;
-           self.cells[pos].marks = [Mark::NotMarked; 10];
+           self.cells[pos].marks = [Mark::Illegal; 10];
            self.holes -= 1;
         }
     }
 
     pub fn legal(&self, pos: usize, value: i32) -> bool {
-        for i in (0..9).map(|i| i + 9*(pos/9)) { // row
+        for i in self.get_row(pos)  { // row
             if i != pos && self.cells[i].number == value {
                 return false
             }
         }
-        for i in (0..9).map(|i| i*9 + pos%9) { // column
+        for i in self.get_col(pos) { // column
             if i != pos && self.cells[i].number == value {
                 return false
             }
@@ -145,7 +145,15 @@ impl Board {
         true
     }
 
-    fn get_box(&self, pos: usize) -> Vec<usize> {
+    pub fn get_row(&self, pos: usize) -> Vec<usize> {
+        (0..9).map(|i| i + 9*(pos/9)).collect::<Vec<usize>>()
+    }
+
+    pub fn get_col(&self, pos: usize) -> Vec<usize> {
+        (0..9).map(|i| i*9 + pos%9).collect::<Vec<usize>>()
+    }
+
+    pub fn get_box(&self, pos: usize) -> Vec<usize> {
         let x = match pos % 9 {
             0|1|2 => 0,
             3|4|5 => 1,
@@ -160,6 +168,10 @@ impl Board {
         v.extend((0..3).map(|n| n+(3*x)+9*(3*y+1)));
         v.extend((0..3).map(|n| n+(3*x)+9*(3*y+2)));
         v
+    }
+
+    pub fn get_representative(&self) -> Vec<usize> {
+        vec!(0, 13, 24, 28, 42, 52, 56, 66, 79) 
     }
 
     pub fn print_board(&self) {

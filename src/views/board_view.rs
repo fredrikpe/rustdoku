@@ -128,7 +128,7 @@ impl View for BoardView {
         if self.highlight > 0 {
             phi.renderer.set_draw_color(settings::SAND);
             for (i, cell) in self.board.cells.iter().enumerate() {
-                if cell.number == self.highlight || (cell.number == 0 && cell.marks[self.highlight as usize] == Mark::Marked) {
+                if cell.number == self.highlight || (cell.number == 0 && cell.marks[self.highlight as usize] == Mark::Legal) {
                     if self.square_colores[i] == settings::WHITE {
                         phi.renderer.fill_rect(Rect::new(11 + 50*(i as i32 % 9),
                                     11 + 50*(i as i32 /9), 49, 49).unwrap().unwrap());
@@ -188,7 +188,7 @@ impl View for BoardView {
         // small numbers (marks)
         for (i, cell) in self.board.cells.iter().enumerate() {
             for (j, &m) in cell.marks.iter().enumerate() {
-                if m == Mark::Marked {
+                if m == Mark::Legal {
                     let j = j as i32;
                     let text = j.to_string();
                     let text = &text[..];
