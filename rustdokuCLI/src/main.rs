@@ -1,9 +1,11 @@
 extern crate colored;
+#[macro_use] extern crate scan_rules;
 
 mod board_import;
 mod game;
 mod logic;
 mod ui;
+
 
 fn main() {
     let mut game = game::Game::new();

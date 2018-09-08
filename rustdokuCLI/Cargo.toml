@@ -5,3 +5,4 @@ authors = ["fredrikpe <fredrikpei@gmail.com>"]
 
 [dependencies]
 colored = "1.6"
+scan-rules = "0.1.3"

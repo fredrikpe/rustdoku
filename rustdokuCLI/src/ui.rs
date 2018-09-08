@@ -1,6 +1,8 @@
 use colored::*;
+use scan_rules::scanner::Word;
 
 use std::io;
+//use std::collections::HashMap;
 
 use logic::Board;
 use logic::Cell;
@@ -8,19 +10,25 @@ use game::Move;
 use game::MoveType;
 
 pub enum MessageType {
-    UnrecognizedMove,
+    UnrecognizedCommand,
+    Standard,
 }
 
 pub struct CLI {
     pub lines_printed: i32,
     pub message_type: MessageType,
+    //pub message_map: HashMap<MessageType, String>,
 }
 
 impl CLI {
     pub fn new() -> CLI {
-        print!("\x1b[2J");  // Clear screen
-        print!("\x1b[H");  // Move cursor top left 
-        CLI { lines_printed: 0 }
+        //print!("\x1b[2J");  // Clear screen
+        //print!("\x1b[H");  // Move cursor top left 
+        CLI { 
+            lines_printed: 0,
+            message_type: MessageType::Standard,
+            //message_map: HashMap<MessageType, String>::new(),
+        }
     }
 
     pub fn render(&mut self, board: &Board) {
@@ -30,53 +38,55 @@ impl CLI {
     }
 
     fn reset_cursor_position(&mut self) {
-        print!("\x1b[H");  // Move cursor top left 
-        print!("\x1b[3J");  // Clear screen from cursor down
-        //while self.lines_printed > 0 {
-            //print!("\x1b[2K\x1b[A\r");
-            //self.lines_printed -= 1;
-        //}
+        //print!("\x1b[H");  // Move cursor top left 
+        //print!("\x1b[3J");  // Clear screen from cursor down
+        while self.lines_printed > 0 {
+            print!("\x1b[2K\x1b[A\r");
+            self.lines_printed -= 1;
+        }
     }
 
     fn print_message(&mut self) {
-        print!("Please input your guess.");
+        match self.message_type {
+            MessageType::Standard => print!("Please input your guess."),
+            MessageType::UnrecognizedCommand => print!("Unrecognized command!"),
+        }
         self.println();
     }
 
     pub fn parse_input(&mut self) -> Move {
-        let mut input = String::new();
+        let mut move_ = Move {
+            move_type: MoveType::NoOpt,
+            i: 0, j: 0,
+        };
 
-
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        self.lines_printed += 1;
-
-        let mut words = input.split_whitespace();
-
-        let mt = self.parse_move(words.nth(0));
-
-        //let match words[1].parse::<i32>() {
-            //Ok(v) => 
-            //Err(e) => 
-
-
-        Move {
-            move_type: mt,
-            i: 2,
-            j: 1,
+        match self.parse_move() {
+            Ok(mt) => move_ = mt,
+            Err(_) => return move_,
         }
+
+        move_
     }
 
-    fn parse_move(&mut self, input: Option<&str>) -> MoveType {
-        match input {
-            Some("s") => MoveType::Set,
-            Some("u") => MoveType::Set,
-            _ => {
-                self.message_type = MessageType::UnrecognizedCommand;
-                MoveType::NoOpt
-            }
+    fn parse_move(&mut self) -> Result<Move, MessageType> {
+        self.lines_printed += 1;
+        self.message_type = MessageType::Standard;
+        readln! {
+            (let mt: Word<&str>, let i: i32, let j: i32) => {
+                match mt {
+                    "set" => return self.parse_pos(MoveType::Set),
+                    //"unset" => return Err(MoveType::UnSet),
+                    _ => (),
+                }
+            },
+            (..other) => {}
         }
+        Err(MessageType::UnrecognizedCommand)
+    }
+
+    fn parse_pos(&mut self, move_type: MoveType)
+        -> Result<Move, MessageType> {
+            Err(MessageType::UnrecognizedCommand)
     }
 
     fn print_board(&mut self, board: &Board) {
